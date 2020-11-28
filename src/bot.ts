@@ -4,6 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
+import * as ChartLyricsHelper from './helpers/ChartLyricsHelper';
 
 client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
@@ -32,6 +33,6 @@ client.on('message', msg => {
 client.login(process.env.BOT_TOKEN);
 
 let getSongMatch = (lyrics: string): void => {
-    let data: string = searchLyricText(lyrics);
+    let data: string = ChartLyricsHelper.searchLyricText(lyrics);
     console.log(data);
 }

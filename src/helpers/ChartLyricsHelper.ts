@@ -14,8 +14,11 @@ let searchLyricText = (lyrics: string): string => {
         })
 
     }).on('error', (err) => {
+        console.log(err);
         console.log('Error searching lyrics: ' + err.message);
     });
 
     return data;
-}
+};
+
+export { searchLyricText };
