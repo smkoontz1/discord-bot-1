@@ -1,0 +1,15 @@
+{
+  "name": "discord-bot-1",
+  "version": "1.0.0",
+  "description": "A general discord bot.",
+  "main": "bot.js",
+  "author": "Steven Koontz",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.10"
+  }
+}
