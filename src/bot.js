@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const ChartLyricsHelper = require("./helpers/ChartLyricsHelper");
+const StringHelper = require("./helpers/StringHelper");
 const SpotifyApiHelper_1 = require("./helpers/SpotifyApiHelper");
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
@@ -26,6 +27,9 @@ client.on('message', msg => {
             getSongMatch(lyricArgs)
                 .then((spotifyUrl) => {
                 msg.reply("Is this your song?\n" + spotifyUrl);
+            })
+                .catch((reason) => {
+                msg.reply(reason);
             });
         }
     }
@@ -40,10 +44,23 @@ let getSongMatch = (lyrics) => {
                 jsonData = result;
             });
             let track = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
+            console.log(track);
+            console.log(track['$']);
+            if (track['$'] !== undefined && track['xsi:nil'] === 'true') {
+                reject('Could not find those lyrics.');
+            }
             let artist = track['Artist'];
             let song = track['Song'];
-            spotifyApiHelper.searchForTrack(song, artist)
+            let cleanArtist = StringHelper.prepareStringForApi(artist);
+            let cleanSong = StringHelper.prepareStringForApi(song);
+            console.log(cleanArtist);
+            console.log(cleanSong);
+            spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
                 .then((trackData) => {
+                console.log(trackData);
+                if (trackData['tracks'].items.length <= 0) {
+                    reject(`Spotify could not match the track: ${song} - ${artist}.`);
+                }
                 let trackMatch = trackData['tracks'].items[0];
                 let externalUrl = trackMatch['external_urls'].spotify;
                 resolve(externalUrl);

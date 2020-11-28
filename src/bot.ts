@@ -1,4 +1,5 @@
 import * as ChartLyricsHelper from './helpers/ChartLyricsHelper';
+import * as StringHelper from './helpers/StringHelper';
 import { SongMatch } from './classes/SongMatch';
 import { SpotifyApiHelper } from './helpers/SpotifyApiHelper';
 
@@ -33,6 +34,9 @@ client.on('message', msg => {
             getSongMatch(lyricArgs)
             .then((spotifyUrl) => {
                 msg.reply("Is this your song?\n" + spotifyUrl);
+            })
+            .catch((reason) => {
+                msg.reply(reason);
             });
         }
         
@@ -52,11 +56,25 @@ let getSongMatch = (lyrics: string): Promise<string> => {
             });
             
             let track: JSON = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
+
+            if (track['$'] !== undefined && track['xsi:nil'] === 'true') {
+                reject('Could not find those lyrics.');
+            }
+
             let artist: string = track['Artist'];
             let song: string = track['Song'];
+
+            let cleanArtist: string = StringHelper.prepareStringForApi(artist);
+            let cleanSong: string = StringHelper.prepareStringForApi(song);
     
-            spotifyApiHelper.searchForTrack(song, artist)
+            spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
             .then((trackData) => {
+                console.log(trackData);
+
+                if (trackData['tracks'].items.length <= 0) {
+                    reject(`Spotify could not match the track: ${song} - ${artist}.`);
+                }
+
                 let trackMatch: JSON = trackData['tracks'].items[0];
                 let externalUrl: string = trackMatch['external_urls'].spotify;
     
