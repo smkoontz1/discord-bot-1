@@ -1,0 +1,1 @@
+{"version":3,"file":"SpotifyAccessToken.js","sourceRoot":"","sources":["SpotifyAccessToken.ts"],"names":[],"mappings":";;;AAAA,MAAa,kBAAkB;IAK3B,YAAY,cAAsB,EAAE,EAAE,YAAoB,EAAE,EAAE,UAAkB,CAAC;QAC7E,IAAI,CAAC,WAAW,GAAG,WAAW,CAAC;QAC/B,IAAI,CAAC,SAAS,GAAG,SAAS,CAAC;QAC3B,IAAI,CAAC,OAAO,GAAG,OAAO,CAAC;IAC3B,CAAC;CACJ;AAVD,gDAUC"}

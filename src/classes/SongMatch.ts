@@ -1,4 +1,4 @@
-class SongMatch {
+export class SongMatch {
     artist: string;
     songTitle: string;
 
