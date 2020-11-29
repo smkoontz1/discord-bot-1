@@ -1,7 +1,8 @@
 import * as ChartLyricsHelper from './helpers/ChartLyricsHelper';
 import * as StringHelper from './helpers/StringHelper';
-import { SongMatch } from './classes/SongMatch';
+import { SongMatch } from './classes/Spotify/SongMatch';
 import { SpotifyApiHelper } from './helpers/SpotifyApiHelper';
+import { UserMessageInfo } from './classes/User/UserMessageInfo';
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
@@ -14,36 +15,78 @@ const spotifyApiHelper = new SpotifyApiHelper();
 const parseString = require('xml2js').parseString;
 
 client.on('ready', () => {
+    client.user.setActivity('Use: ^boxcat');
     console.log(`Logged in as ${client.user.tag}`);
 });
 
-const Lyrics: string = "^lyrics";
+let userMessageInfoMap: Map<string, UserMessageInfo> = new Map<string, UserMessageInfo>();
 
-client.on('message', msg => {    
-    if (msg.content === 'ping') {
-        msg.reply('pong');
-    }
+const LYRICS: string = "^lyrics";
 
-    if (msg.content.startsWith(Lyrics)) {
-        const lyricArgs: string = msg.content.slice(Lyrics.length).trim();
+client.on('message', msg => {
+    if (msg.author.tag !== client.user.tag) {
+        let username: string = msg.author.username;
 
-        if (lyricArgs === '') {
-            msg.reply('Please add lyric arguments.');
+        if (messageAllowedFrom(username)) {
+            if (msg.content === '^boxcat') {
+                msg.reply('```The current commands are:\n\n' +
+                                '^ping\n' +
+                                '^lyrics```');
+            }
+        
+            if (msg.content === '^ping') {
+                msg.reply('pong');
+            }
+        
+            if (msg.content.startsWith(LYRICS)) {
+                const lyricArgs: string = msg.content.slice(LYRICS.length).trim();
+        
+                if (lyricArgs === '') {
+                    msg.reply('Please add lyric arguments.');
+                }
+                else {
+                    getSongMatch(lyricArgs)
+                    .then((spotifyUrl) => {
+                        msg.reply("Is this your song?\n" + spotifyUrl);
+                    })
+                    .catch((reason) => {
+                        msg.reply(reason);
+                    });
+                }
+                
+            }
         }
         else {
-            getSongMatch(lyricArgs)
-            .then((spotifyUrl) => {
-                msg.reply("Is this your song?\n" + spotifyUrl);
-            })
-            .catch((reason) => {
-                msg.reply(reason);
-            });
+            msg.reply(`Sorry, you can only send 5 messages every 30 seconds`);
         }
-        
     }
+    
 });
 
 client.login(process.env.BOT_TOKEN);
+
+const MESSAGE_LIMIT: number = 5;
+
+let messageAllowedFrom = (username: string): boolean => {
+    let userInfo = userMessageInfoMap.get(username);
+
+    if (userInfo === undefined) {
+        userMessageInfoMap.set(username, new UserMessageInfo(username));
+        return true;
+    }
+    else if (Date.now() > userInfo.messageResetTime) {
+        userInfo.resetMessageCooldown();
+        return true;
+    }
+
+    userInfo.messageCount++;
+
+    if (userInfo.messageCount <= MESSAGE_LIMIT) {
+        return true;
+    }
+
+    return false;
+}
 
 let getSongMatch = (lyrics: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -69,8 +112,6 @@ let getSongMatch = (lyrics: string): Promise<string> => {
     
             spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
             .then((trackData) => {
-                console.log(trackData);
-
                 if (trackData['tracks'].items.length <= 0) {
                     reject(`Spotify could not match the track: ${song} - ${artist}.`);
                 }
@@ -88,6 +129,5 @@ let getSongMatch = (lyrics: string): Promise<string> => {
         .catch((reason) => {
             reject(reason);
         });
-    });
-    
+    });   
 }
