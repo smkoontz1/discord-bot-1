@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserMessageInfo = void 0;
-const MESSAGE_COUNT_RESET_MS = 10000;
+const MESSAGE_COUNT_RESET_MS = 30000;
 class UserMessageInfo {
     constructor(username) {
         this.messageCount = 0;

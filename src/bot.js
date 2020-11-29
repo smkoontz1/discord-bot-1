@@ -46,7 +46,7 @@ client.on('message', msg => {
             }
         }
         else {
-            msg.reply(`Sorry, you can only send 5 messages every 10 seconds`);
+            msg.reply(`Sorry, you can only send 5 messages every 30 seconds`);
         }
     }
 });
@@ -86,7 +86,6 @@ let getSongMatch = (lyrics) => {
             let cleanSong = StringHelper.prepareStringForApi(song);
             spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
                 .then((trackData) => {
-                console.log(trackData);
                 if (trackData['tracks'].items.length <= 0) {
                     reject(`Spotify could not match the track: ${song} - ${artist}.`);
                 }
