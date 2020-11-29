@@ -56,8 +56,8 @@ let getSongMatch = (lyrics: string): Promise<string> => {
             });
             
             let track: JSON = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
-
-            if (track['$'] !== undefined && track['xsi:nil'] === 'true') {
+            
+            if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
                 reject('Could not find those lyrics.');
             }
 

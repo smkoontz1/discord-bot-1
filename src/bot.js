@@ -44,17 +44,13 @@ let getSongMatch = (lyrics) => {
                 jsonData = result;
             });
             let track = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
-            console.log(track);
-            console.log(track['$']);
-            if (track['$'] !== undefined && track['xsi:nil'] === 'true') {
+            if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
                 reject('Could not find those lyrics.');
             }
             let artist = track['Artist'];
             let song = track['Song'];
             let cleanArtist = StringHelper.prepareStringForApi(artist);
             let cleanSong = StringHelper.prepareStringForApi(song);
-            console.log(cleanArtist);
-            console.log(cleanSong);
             spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
                 .then((trackData) => {
                 console.log(trackData);
