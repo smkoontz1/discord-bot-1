@@ -1,24 +1,20 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchLyricText = void 0;
-const https = require('https');
-const http = require('http');
-let searchLyricText = (lyrics) => {
-    return new Promise((resolve, reject) => {
-        let encodedLyricQuery = encodeURIComponent(lyrics);
-        http.get(`http://api.chartlyrics.com/apiv1.asmx/SearchLyricText?lyricText=${encodedLyricQuery}`, (response) => {
-            let data = '';
-            response.on('data', (chunk) => {
-                data += chunk;
-            });
-            response.on('end', () => {
-                resolve(data);
-            });
-        }).on('error', (err) => {
-            console.log('Error searching lyrics: ' + err.message);
-            reject(err.message);
-        });
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-exports.searchLyricText = searchLyricText;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchLyricTextAsync = void 0;
+const axios = require('axios').default;
+let searchLyricTextAsync = (lyrics) => __awaiter(void 0, void 0, void 0, function* () {
+    let encodedLyricQuery = encodeURIComponent(lyrics);
+    let response = yield axios.get(`http://api.chartlyrics.com/apiv1.asmx/SearchLyricText?lyricText=${encodedLyricQuery}`);
+    return response.data;
+});
+exports.searchLyricTextAsync = searchLyricTextAsync;
 //# sourceMappingURL=ChartLyricsHelper.js.map

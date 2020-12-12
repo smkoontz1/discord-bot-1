@@ -23,7 +23,7 @@ let userMessageInfoMap: Map<string, UserMessageInfo> = new Map<string, UserMessa
 
 const LYRICS: string = "^lyrics";
 
-client.on('message', msg => {
+client.on('message', async (msg) => {
     if (msg.author.tag !== client.user.tag) {
         let username: string = msg.author.username;
 
@@ -45,15 +45,16 @@ client.on('message', msg => {
                     msg.reply('Please add lyric arguments.');
                 }
                 else {
-                    getSongMatch(lyricArgs)
-                    .then((spotifyUrl) => {
+                    try {
+                        let spotifyUrl: string = await getSongMatchSpotifyUrlAsync(lyricArgs);
                         msg.reply("Is this your song?\n" + spotifyUrl);
-                    })
-                    .catch((reason) => {
-                        msg.reply(reason);
-                    });
+                    }
+                    catch (error) {
+                        console.log('Attempting to send an error');
+                        console.log('The error is:\n' + error);
+                        msg.reply(error.toString());
+                    }
                 }
-                
             }
         }
         else {
@@ -88,46 +89,34 @@ let messageAllowedFrom = (username: string): boolean => {
     return false;
 }
 
-let getSongMatch = (lyrics: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        ChartLyricsHelper.searchLyricText(lyrics)
-        .then((xmlData) => {
-            let jsonData: JSON;
-            
-            parseString(xmlData, (err, result) => {
-                jsonData = result;
-            });
-            
-            let track: JSON = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
-            
-            if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
-                reject('Could not find those lyrics.');
-            }
-
-            let artist: string = track['Artist'];
-            let song: string = track['Song'];
-
-            let cleanArtist: string = StringHelper.prepareStringForApi(artist);
-            let cleanSong: string = StringHelper.prepareStringForApi(song);
+let getSongMatchSpotifyUrlAsync = async (lyrics: string): Promise<string> => {
+    let xmlData: string = await ChartLyricsHelper.searchLyricTextAsync(lyrics);
     
-            spotifyApiHelper.searchForTrack(cleanSong, cleanArtist)
-            .then((trackData) => {
-                if (trackData['tracks'].items.length <= 0) {
-                    reject(`Spotify could not match the track: ${song} - ${artist}.`);
-                }
-
-                let trackMatch: JSON = trackData['tracks'].items[0];
-                let externalUrl: string = trackMatch['external_urls'].spotify;
+    let jsonData: JSON;    
+    parseString(xmlData, (err, result) => {
+        jsonData = result;
+    });
+        
+    let track: JSON = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
     
-                resolve(externalUrl);
-            })
-            .catch((reason) =>
-            {
-                reject(reason);
-            });
-        })
-        .catch((reason) => {
-            reject(reason);
-        });
-    });   
+    if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
+        throw new Error('Could not find those lyrics.');
+    }
+
+    let artist: string = track['Artist'];
+    let song: string = track['Song'];
+
+    let cleanArtist: string = StringHelper.prepareStringForApi(artist);
+    let cleanSong: string = StringHelper.prepareStringForApi(song);
+
+    let trackData = await spotifyApiHelper.searchForTrackAsync(cleanSong, cleanArtist);
+    
+    if (trackData['tracks'].items.length <= 0) {
+        throw new Error(`Spotify could not match the track: ${song} - ${artist}.`);
+    }
+
+    let trackMatch: JSON = trackData['tracks'].items[0];
+    let externalUrl: string = trackMatch['external_urls'].spotify;
+
+    return externalUrl;
 }

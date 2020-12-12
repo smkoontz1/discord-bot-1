@@ -1,98 +1,79 @@
 import { SpotifyAccessToken } from '../classes/Spotify/SpotifyAccessToken';
 
 const https = require('https');
+const axios = require('axios').default;
 const qs = require('querystring');
 
 export class SpotifyApiHelper {
     token: SpotifyAccessToken = new SpotifyAccessToken();
 
-    getAccessToken = (): Promise<SpotifyAccessToken> => {
-        return new Promise((resolve, reject) => {
-            if (this.token.expires > Date.now()) {
-                resolve(this.token);
-            }
-            else {
-                let options = {
-                    'method': 'POST',
-                    'hostname': 'accounts.spotify.com',
-                    'path': '/api/token',
-                    'headers': {
-                        'Authorization': `Basic ${process.env.SPOTIFY_BASE64_CLIENT}`,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Cookie': '__Host-device_id=AQBdCW3llYizcLcsO6eKEZjscj8xaYNfoPDz-oQKzZjV3ImKkmLKjvIr0kA530QP2LYygN0D7MZGQOq0jBZ-7JB5s86lQrcC7hI'
-                    },
-                    'maxRedirects': 20
-                };
-        
-                let req = https.request(options, (response) => {
-                    let data: string = '';
-        
-                    response.on('data', (chunk) => {
-                        data += chunk;
-                    });
-        
-                    response.on('end', () => {
-                        let json = JSON.parse(data);
-                        let accessToken = json['access_token'];
-                        let tokenType = json['token_type'];
-
-                        let expiresIn: number = json['expires_in'] * 1000;
-                        let expires = Date.now() + expiresIn;
-
-                        this.token.accessToken = accessToken;
-                        this.token.tokenType = tokenType;
-                        this.token.expires = expires;
-                        resolve(this.token);
-                    });
-                }).on('error', (err) => {
-                    console.log('Error obtaining authorization: ' + err.message);
-                    reject(err.message);
+    getAccessTokenAsync = async (): Promise<SpotifyAccessToken> => {
+        if (this.token.expires > Date.now()) {
+            return this.token;
+        }
+        else {
+            let config = {
+                'method': 'POST',
+                'baseURL': 'https://accounts.spotify.com',
+                'url': '/api/token',
+                'headers': {
+                    'Authorization': `Basic ${process.env.SPOTIFY_BASE64_CLIENT}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Cookie': '__Host-device_id=AQBdCW3llYizcLcsO6eKEZjscj8xaYNfoPDz-oQKzZjV3ImKkmLKjvIr0kA530QP2LYygN0D7MZGQOq0jBZ-7JB5s86lQrcC7hI'
+                },
+                'data': qs.stringify({'grant_type': 'client_credentials'}),
+                'maxRedirects': 20
+            };
+            
+            let responseStuff: string;
+            console.log('Making token request.');
+            axios.request(config)
+                .then((response) => {
+                    console.log('Got in here 1.');
+                    console.log(response);
+                    responseStuff = response;
+                    console.log(JSON.stringify(response));
+                })
+                .catch((error) => {
+                    console.log('Got in here 2.');
+                    console.log(error);
                 });
 
-                let postData = qs.stringify({
-                    'grant_type': 'client_credentials'
-                });
+            let json = JSON.parse(responseStuff['data']);
+            let accessToken = json['access_token'];
+            let tokenType = json['token_type'];
 
-                req.write(postData);
+            let expiresIn: number = json['expires_in'] * 1000;
+            let expires = Date.now() + expiresIn;
 
-                req.end();
-            }
-        });
+            this.token.accessToken = accessToken;
+            this.token.tokenType = tokenType;
+            this.token.expires = expires;
+
+            return this.token;
+        }
     };
     
-    searchForTrack = (track: string, artist: string): Promise<JSON> => {
-        return new Promise((resolve, reject) => {
-            let encodedTrackQuery = encodeURIComponent(track).trim();
-            let encodedArtistQuery = encodeURIComponent(artist).trim();
+    searchForTrackAsync = async (track: string, artist: string): Promise<JSON> => {
+        let encodedTrackQuery: string = encodeURIComponent(track).trim();
+        let encodedArtistQuery: string = encodeURIComponent(artist).trim();
 
-            this.getAccessToken().then((accessToken) => {
-                let options = {
-                    'method': 'GET',
-                    'hostname': 'api.spotify.com',
-                    'path': `/v1/search?q=track:${encodedTrackQuery}%20artist:${encodedArtistQuery}&type=track`,
-                    'headers': {
-                        'Authorization': `Bearer ${accessToken.accessToken}}`,
-                    },
-                    'maxRedirects': 20
-                };
-                
-                let req = https.request(options, (response) => {
-                    let data: string = '';
+        let accessToken: SpotifyAccessToken = await this.getAccessTokenAsync();
 
-                    response.on('data', (chunk) => {
-                        data += chunk;
-                    });
+        let config: object = {
+            'method': 'GET',
+            'baseURL': 'https://api.spotify.com',
+            'url': `/v1/search?q=track:${encodedTrackQuery}%20artist:${encodedArtistQuery}&type=track`,
+            'headers': {
+                'Authorization': `Bearer ${accessToken.accessToken}}`,
+            },
+            'maxRedirects': 20
+        };
+        
+        console.log('Making search request.');
+        let response = await axios.request(config);
+        console.log(response.data);
 
-                    response.on('end', () => {
-                        resolve(JSON.parse(data));
-                    });
-                }).on('error', (err) => {
-                    console.log('Error searching for track: ' + err.message);
-                    reject(err.message);
-                });
-
-                req.end();
-            });
-        });
+        return JSON.parse(response.data);
     }
 }

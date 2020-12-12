@@ -1,87 +1,81 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpotifyApiHelper = void 0;
 const SpotifyAccessToken_1 = require("../classes/Spotify/SpotifyAccessToken");
 const https = require('https');
+const axios = require('axios').default;
 const qs = require('querystring');
 class SpotifyApiHelper {
     constructor() {
         this.token = new SpotifyAccessToken_1.SpotifyAccessToken();
-        this.getAccessToken = () => {
-            return new Promise((resolve, reject) => {
-                if (this.token.expires > Date.now()) {
-                    resolve(this.token);
-                }
-                else {
-                    let options = {
-                        'method': 'POST',
-                        'hostname': 'accounts.spotify.com',
-                        'path': '/api/token',
-                        'headers': {
-                            'Authorization': `Basic ${process.env.SPOTIFY_BASE64_CLIENT}`,
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                            'Cookie': '__Host-device_id=AQBdCW3llYizcLcsO6eKEZjscj8xaYNfoPDz-oQKzZjV3ImKkmLKjvIr0kA530QP2LYygN0D7MZGQOq0jBZ-7JB5s86lQrcC7hI'
-                        },
-                        'maxRedirects': 20
-                    };
-                    let req = https.request(options, (response) => {
-                        let data = '';
-                        response.on('data', (chunk) => {
-                            data += chunk;
-                        });
-                        response.on('end', () => {
-                            let json = JSON.parse(data);
-                            let accessToken = json['access_token'];
-                            let tokenType = json['token_type'];
-                            let expiresIn = json['expires_in'] * 1000;
-                            let expires = Date.now() + expiresIn;
-                            this.token.accessToken = accessToken;
-                            this.token.tokenType = tokenType;
-                            this.token.expires = expires;
-                            resolve(this.token);
-                        });
-                    }).on('error', (err) => {
-                        console.log('Error obtaining authorization: ' + err.message);
-                        reject(err.message);
-                    });
-                    let postData = qs.stringify({
-                        'grant_type': 'client_credentials'
-                    });
-                    req.write(postData);
-                    req.end();
-                }
-            });
-        };
-        this.searchForTrack = (track, artist) => {
-            return new Promise((resolve, reject) => {
-                let encodedTrackQuery = encodeURIComponent(track).trim();
-                let encodedArtistQuery = encodeURIComponent(artist).trim();
-                this.getAccessToken().then((accessToken) => {
-                    let options = {
-                        'method': 'GET',
-                        'hostname': 'api.spotify.com',
-                        'path': `/v1/search?q=track:${encodedTrackQuery}%20artist:${encodedArtistQuery}&type=track`,
-                        'headers': {
-                            'Authorization': `Bearer ${accessToken.accessToken}}`,
-                        },
-                        'maxRedirects': 20
-                    };
-                    let req = https.request(options, (response) => {
-                        let data = '';
-                        response.on('data', (chunk) => {
-                            data += chunk;
-                        });
-                        response.on('end', () => {
-                            resolve(JSON.parse(data));
-                        });
-                    }).on('error', (err) => {
-                        console.log('Error searching for track: ' + err.message);
-                        reject(err.message);
-                    });
-                    req.end();
+        this.getAccessTokenAsync = () => __awaiter(this, void 0, void 0, function* () {
+            if (this.token.expires > Date.now()) {
+                return this.token;
+            }
+            else {
+                let config = {
+                    'method': 'POST',
+                    'baseURL': 'https://accounts.spotify.com',
+                    'url': '/api/token',
+                    'headers': {
+                        'Authorization': `Basic ${process.env.SPOTIFY_BASE64_CLIENT}`,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Cookie': '__Host-device_id=AQBdCW3llYizcLcsO6eKEZjscj8xaYNfoPDz-oQKzZjV3ImKkmLKjvIr0kA530QP2LYygN0D7MZGQOq0jBZ-7JB5s86lQrcC7hI'
+                    },
+                    'data': qs.stringify({ 'grant_type': 'client_credentials' }),
+                    'maxRedirects': 20
+                };
+                let responseStuff;
+                console.log('Making token request.');
+                axios.request(config)
+                    .then((response) => {
+                    console.log('Got in here 1.');
+                    console.log(response);
+                    responseStuff = response;
+                    console.log(JSON.stringify(response));
+                })
+                    .catch((error) => {
+                    console.log('Got in here 2.');
+                    console.log(error);
                 });
-            });
-        };
+                let json = JSON.parse(responseStuff['data']);
+                let accessToken = json['access_token'];
+                let tokenType = json['token_type'];
+                let expiresIn = json['expires_in'] * 1000;
+                let expires = Date.now() + expiresIn;
+                this.token.accessToken = accessToken;
+                this.token.tokenType = tokenType;
+                this.token.expires = expires;
+                return this.token;
+            }
+        });
+        this.searchForTrackAsync = (track, artist) => __awaiter(this, void 0, void 0, function* () {
+            let encodedTrackQuery = encodeURIComponent(track).trim();
+            let encodedArtistQuery = encodeURIComponent(artist).trim();
+            let accessToken = yield this.getAccessTokenAsync();
+            let config = {
+                'method': 'GET',
+                'baseURL': 'https://api.spotify.com',
+                'url': `/v1/search?q=track:${encodedTrackQuery}%20artist:${encodedArtistQuery}&type=track`,
+                'headers': {
+                    'Authorization': `Bearer ${accessToken.accessToken}}`,
+                },
+                'maxRedirects': 20
+            };
+            console.log('Making search request.');
+            let response = yield axios.request(config);
+            console.log(response.data);
+            return JSON.parse(response.data);
+        });
     }
 }
 exports.SpotifyApiHelper = SpotifyApiHelper;
