@@ -17,4 +17,4 @@ let searchLyricTextAsync = (lyrics) => __awaiter(void 0, void 0, void 0, functio
     return response.data;
 });
 exports.searchLyricTextAsync = searchLyricTextAsync;
-//# sourceMappingURL=ChartLyricsHelper.js.map
+//# sourceMappingURL=ChartLyricsService.js.map

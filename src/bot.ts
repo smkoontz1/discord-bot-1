@@ -1,8 +1,5 @@
-import * as ChartLyricsHelper from './helpers/ChartLyricsHelper';
-import * as StringHelper from './helpers/StringHelper';
-import { SongMatch } from './classes/Spotify/SongMatch';
-import { SpotifyApiHelper } from './helpers/SpotifyApiHelper';
-import { UserMessageInfo } from './classes/User/UserMessageInfo';
+import { SpotifyApiService } from './services/spotify/SpotifyApiService';
+import { UserService } from './services/user/UserService';
 
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config();
@@ -10,16 +7,13 @@ if (process.env.NODE_ENV !== 'production') {
 
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const spotifyApiHelper = new SpotifyApiHelper();
-
-const parseString = require('xml2js').parseString;
+const spotifyApiService = new SpotifyApiService();
+const userService = new UserService();
 
 client.on('ready', () => {
     client.user.setActivity('Use: ^boxcat');
     console.log(`Logged in as ${client.user.tag}`);
 });
-
-let userMessageInfoMap: Map<string, UserMessageInfo> = new Map<string, UserMessageInfo>();
 
 const LYRICS: string = "^lyrics";
 
@@ -27,7 +21,7 @@ client.on('message', async (msg) => {
     if (msg.author.tag !== client.user.tag) {
         let username: string = msg.author.username;
 
-        if (messageAllowedFrom(username)) {
+        if (userService.messageAllowedFrom(username)) {
             if (msg.content === '^boxcat') {
                 msg.reply('```The current commands are:\n\n' +
                                 '^ping\n' +
@@ -46,11 +40,10 @@ client.on('message', async (msg) => {
                 }
                 else {
                     try {
-                        let spotifyUrl: string = await getSongMatchSpotifyUrlAsync(lyricArgs);
+                        let spotifyUrl: string = await spotifyApiService.getSongMatchSpotifyUrlAsync(lyricArgs);
                         msg.reply("Is this your song?\n" + spotifyUrl);
                     }
                     catch (error) {
-                        console.log('Attempting to send an error');
                         console.log('The error is:\n' + error);
                         msg.reply(error.toString());
                     }
@@ -65,58 +58,3 @@ client.on('message', async (msg) => {
 });
 
 client.login(process.env.BOT_TOKEN);
-
-const MESSAGE_LIMIT: number = 5;
-
-let messageAllowedFrom = (username: string): boolean => {
-    let userInfo = userMessageInfoMap.get(username);
-
-    if (userInfo === undefined) {
-        userMessageInfoMap.set(username, new UserMessageInfo(username));
-        return true;
-    }
-    else if (Date.now() > userInfo.messageResetTime) {
-        userInfo.resetMessageCooldown();
-        return true;
-    }
-
-    userInfo.messageCount++;
-
-    if (userInfo.messageCount <= MESSAGE_LIMIT) {
-        return true;
-    }
-
-    return false;
-}
-
-let getSongMatchSpotifyUrlAsync = async (lyrics: string): Promise<string> => {
-    let xmlData: string = await ChartLyricsHelper.searchLyricTextAsync(lyrics);
-    
-    let jsonData: JSON;    
-    parseString(xmlData, (err, result) => {
-        jsonData = result;
-    });
-        
-    let track: JSON = jsonData['ArrayOfSearchLyricResult'].SearchLyricResult[0];
-    
-    if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
-        throw new Error('Could not find those lyrics.');
-    }
-
-    let artist: string = track['Artist'];
-    let song: string = track['Song'];
-
-    let cleanArtist: string = StringHelper.prepareStringForApi(artist);
-    let cleanSong: string = StringHelper.prepareStringForApi(song);
-
-    let trackData = await spotifyApiHelper.searchForTrackAsync(cleanSong, cleanArtist);
-    
-    if (trackData['tracks'].items.length <= 0) {
-        throw new Error(`Spotify could not match the track: ${song} - ${artist}.`);
-    }
-
-    let trackMatch: JSON = trackData['tracks'].items[0];
-    let externalUrl: string = trackMatch['external_urls'].spotify;
-
-    return externalUrl;
-}

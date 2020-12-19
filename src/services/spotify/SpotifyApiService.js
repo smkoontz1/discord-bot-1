@@ -9,12 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SpotifyApiHelper = void 0;
-const SpotifyAccessToken_1 = require("../classes/Spotify/SpotifyAccessToken");
-const https = require('https');
+exports.SpotifyApiService = void 0;
+const ChartLyricsService = require("./ChartLyricsService");
+const StringHelper = require("../../helpers/StringHelper");
+const SpotifyAccessToken_1 = require("../../classes/spotify/SpotifyAccessToken");
 const axios = require('axios').default;
 const qs = require('querystring');
-class SpotifyApiHelper {
+const parseString = require('xml2js').parseString;
+class SpotifyApiService {
     constructor() {
         this.token = new SpotifyAccessToken_1.SpotifyAccessToken();
         this.getAccessTokenAsync = () => __awaiter(this, void 0, void 0, function* () {
@@ -34,10 +36,8 @@ class SpotifyApiHelper {
                     'data': qs.stringify({ 'grant_type': 'client_credentials' }),
                     'maxRedirects': 20
                 };
-                console.log('Making token request.');
                 try {
                     let response = yield axios.request(config);
-                    console.log(response);
                     let responseData = response['data'];
                     let accessToken = responseData['access_token'];
                     let tokenType = responseData['token_type'];
@@ -48,9 +48,8 @@ class SpotifyApiHelper {
                     this.token.expires = expires;
                 }
                 catch (error) {
-                    console.log('Error getting token.');
+                    console.log(`Error getting token:\n${error}`);
                 }
-                console.log('Returning token:\n' + this.token);
                 return this.token;
             }
         });
@@ -67,12 +66,32 @@ class SpotifyApiHelper {
                 },
                 'maxRedirects': 20
             };
-            console.log('Making search request.');
             let response = yield axios.request(config);
-            console.log(response.data);
-            return JSON.parse(response.data);
+            return response['data'];
+        });
+        this.getSongMatchSpotifyUrlAsync = (lyrics) => __awaiter(this, void 0, void 0, function* () {
+            let xmlLyricMatch = yield ChartLyricsService.searchLyricTextAsync(lyrics);
+            let jsonLyricMatch;
+            parseString(xmlLyricMatch, (err, result) => {
+                jsonLyricMatch = result;
+            });
+            let track = jsonLyricMatch['ArrayOfSearchLyricResult'].SearchLyricResult[0];
+            if (track['$'] !== undefined && track['$']['xsi:nil'] === 'true') {
+                throw new Error('Could not find those lyrics.');
+            }
+            let artist = track['Artist'];
+            let song = track['Song'];
+            let cleanArtist = StringHelper.prepareStringForApi(artist);
+            let cleanSong = StringHelper.prepareStringForApi(song);
+            let spotifyTrackData = yield this.searchForTrackAsync(cleanSong, cleanArtist);
+            if (spotifyTrackData['tracks'].items.length <= 0) {
+                throw new Error(`Spotify could not match the track: ${song} - ${artist}.`);
+            }
+            let trackMatch = spotifyTrackData['tracks'].items[0];
+            let externalUrl = trackMatch['external_urls'].spotify;
+            return externalUrl;
         });
     }
 }
-exports.SpotifyApiHelper = SpotifyApiHelper;
-//# sourceMappingURL=SpotifyApiHelper.js.map
+exports.SpotifyApiService = SpotifyApiService;
+//# sourceMappingURL=SpotifyApiService.js.map
