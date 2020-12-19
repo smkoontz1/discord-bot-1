@@ -25,31 +25,27 @@ export class SpotifyApiHelper {
                 'maxRedirects': 20
             };
             
-            let responseStuff: string;
             console.log('Making token request.');
-            axios.request(config)
-                .then((response) => {
-                    console.log('Got in here 1.');
-                    console.log(response);
-                    responseStuff = response;
-                    console.log(JSON.stringify(response));
-                })
-                .catch((error) => {
-                    console.log('Got in here 2.');
-                    console.log(error);
-                });
+            try {
+                let response: JSON = await axios.request(config);
+                console.log(response);
+                
+                let responseData: JSON = response['data'];
+                let accessToken = responseData['access_token'];
+                let tokenType = responseData['token_type'];
+    
+                let expiresIn: number = response['expires_in'] * 1000;
+                let expires: number = Date.now() + expiresIn;
+    
+                this.token.accessToken = accessToken;
+                this.token.tokenType = tokenType;
+                this.token.expires = expires;
+            }
+            catch (error) {
+                console.log('Error getting token.');
+            }
 
-            let json = JSON.parse(responseStuff['data']);
-            let accessToken = json['access_token'];
-            let tokenType = json['token_type'];
-
-            let expiresIn: number = json['expires_in'] * 1000;
-            let expires = Date.now() + expiresIn;
-
-            this.token.accessToken = accessToken;
-            this.token.tokenType = tokenType;
-            this.token.expires = expires;
-
+            console.log('Returning token:\n' + this.token);
             return this.token;
         }
     };
