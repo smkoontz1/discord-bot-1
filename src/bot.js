@@ -36,7 +36,7 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
                 msg.reply('pong');
             }
             if (msg.content === 'cdtest') {
-                msg.reply('cdtest made it: 13');
+                msg.reply('cdtest made it: 14');
             }
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs = msg.content.slice(LYRICS.length).trim();
