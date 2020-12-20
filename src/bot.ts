@@ -43,6 +43,10 @@ client.on('message', async (msg) => {
             if (msg.content === 'cdtest3') {
                 msg.reply('cdtest3 made it.');
             }
+
+            if (msg.content === 'cdtest4') {
+                msg.reply('cdtest4 made it.');
+            }
         
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs: string = msg.content.slice(LYRICS.length).trim();
