@@ -33,7 +33,7 @@ client.on('message', async (msg) => {
             }
 
             if (msg.content === 'cdtest') {
-                msg.reply('cdtest made it: 16');
+                msg.reply('cdtest made it: double checking');
             }
         
             if (msg.content.startsWith(LYRICS)) {
