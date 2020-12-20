@@ -35,17 +35,8 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
             if (msg.content === '^ping') {
                 msg.reply('pong');
             }
-            if (msg.content === 'cdtest1') {
-                msg.reply('cdtest1 made it.');
-            }
-            if (msg.content === 'cdtest2') {
-                msg.reply('cdtest2 made it.');
-            }
-            if (msg.content === 'cdtest3') {
-                msg.reply('cdtest3 made it.');
-            }
-            if (msg.content === 'cdtest4') {
-                msg.reply('cdtest4 made it.');
+            if (msg.content === 'cdtest') {
+                msg.reply('cdtest made it: 4');
             }
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs = msg.content.slice(LYRICS.length).trim();
