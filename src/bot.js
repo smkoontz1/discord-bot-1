@@ -35,9 +35,6 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
             if (msg.content === '^ping') {
                 msg.reply('pong');
             }
-            if (msg.content === 'cdtest') {
-                msg.reply('cdtest made it: double checking');
-            }
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs = msg.content.slice(LYRICS.length).trim();
                 if (lyricArgs === '') {

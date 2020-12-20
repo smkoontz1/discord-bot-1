@@ -31,10 +31,6 @@ client.on('message', async (msg) => {
             if (msg.content === '^ping') {
                 msg.reply('pong');
             }
-
-            if (msg.content === 'cdtest') {
-                msg.reply('cdtest made it: double checking');
-            }
         
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs: string = msg.content.slice(LYRICS.length).trim();
