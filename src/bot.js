@@ -41,6 +41,9 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
             if (msg.content === 'cdtest2') {
                 msg.reply('cdtest2 made it.');
             }
+            if (msg.content === 'cdtest3') {
+                msg.reply('cdtest3 made it.');
+            }
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs = msg.content.slice(LYRICS.length).trim();
                 if (lyricArgs === '') {
