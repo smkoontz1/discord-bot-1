@@ -57,5 +57,13 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
         }
     }
 }));
+// Emitted whenever a member leaves a guild, or is kicked.
+client.on('guildMemberRemove', member => {
+    const guild = member.name;
+    const channel = member.guild.channels.cache.find(ch => ch.name === 'chat');
+    if (!channel)
+        return;
+    channel.send(`${member} has left ${guild}.`);
+});
 client.login(process.env.BOT_TOKEN);
 //# sourceMappingURL=bot.js.map
