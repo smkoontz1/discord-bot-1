@@ -22,10 +22,16 @@ client.on('ready', () => {
     client.user.setActivity('Use: ^boxcat');
     console.log(`Logged in as ${client.user.tag}`);
 });
-const LYRICS = "^lyrics";
+// BOT COMMANDS
+const BOT_CHAR = '^';
+const LYRICS = '^lyrics';
 client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
-    if (msg.author.tag !== client.user.tag) {
+    if (msg.author.tag !== client.user.tag &&
+        msg.content.startsWith(BOT_CHAR)) {
         let username = msg.author.username;
+        if (process.env.ENVIRONMENT.toLocaleLowerCase() === 'prod' && msg.channel.name !== 'bot') {
+            msg.reply('Use #bot');
+        }
         if (userService.messageAllowedFrom(username)) {
             if (msg.content === '^boxcat') {
                 msg.reply('```The current commands are:\n\n' +
@@ -33,7 +39,7 @@ client.on('message', (msg) => __awaiter(void 0, void 0, void 0, function* () {
                     '^lyrics```');
             }
             if (msg.content === '^ping') {
-                msg.reply('pong');
+                msg.reply('pong', { tts: true });
             }
             if (msg.content.startsWith(LYRICS)) {
                 const lyricArgs = msg.content.slice(LYRICS.length).trim();

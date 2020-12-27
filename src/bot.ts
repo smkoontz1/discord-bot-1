@@ -15,46 +15,55 @@ client.on('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
 });
 
-const LYRICS: string = "^lyrics";
+// BOT COMMANDS
+const BOT_CHAR: string = '^';
+const LYRICS: string = '^lyrics';
 
 client.on('message', async (msg) => {
-    if (msg.author.tag !== client.user.tag) {
+    if (msg.author.tag !== client.user.tag &&
+        msg.content.startsWith(BOT_CHAR)) {
         let username: string = msg.author.username;
 
-        if (userService.messageAllowedFrom(username)) {
-            if (msg.content === '^boxcat') {
-                msg.reply('```The current commands are:\n\n' +
-                                '^ping\n' +
-                                '^lyrics```');
-            }
-        
-            if (msg.content === '^ping') {
-                msg.reply('pong');
-            }
-        
-            if (msg.content.startsWith(LYRICS)) {
-                const lyricArgs: string = msg.content.slice(LYRICS.length).trim();
-        
-                if (lyricArgs === '') {
-                    msg.reply('Please add lyric arguments.');
-                }
-                else {
-                    try {
-                        let spotifyUrl: string = await spotifyApiService.getSongMatchSpotifyUrlAsync(lyricArgs);
-                        msg.reply("Is this your song?\n" + spotifyUrl);
-                    }
-                    catch (error) {
-                        console.log('The error is:\n' + error);
-                        msg.reply(error.toString());
-                    }
-                }
-            }
+        if (process.env.ENVIRONMENT.toLocaleLowerCase() === 'prod' && msg.channel.name !== 'bot')
+        {
+            msg.reply('Use #bot');
         }
-        else {
-            msg.reply(`Sorry, you can only send 5 messages every 30 seconds`);
+        else
+        {
+            if (userService.messageAllowedFrom(username)) {
+                if (msg.content === '^boxcat') {
+                    msg.reply('```The current commands are:\n\n' +
+                                    '^ping\n' +
+                                    '^lyrics```');
+                }
+            
+                if (msg.content === '^ping') {
+                    msg.reply('pong', { tts: true });
+                }
+            
+                if (msg.content.startsWith(LYRICS)) {
+                    const lyricArgs: string = msg.content.slice(LYRICS.length).trim();
+            
+                    if (lyricArgs === '') {
+                        msg.reply('Please add lyric arguments.');
+                    }
+                    else {
+                        try {
+                            let spotifyUrl: string = await spotifyApiService.getSongMatchSpotifyUrlAsync(lyricArgs);
+                            msg.reply("Is this your song?\n" + spotifyUrl);
+                        }
+                        catch (error) {
+                            console.log('The error is:\n' + error);
+                            msg.reply(error.toString());
+                        }
+                    }
+                }
+            }
+            else {
+                msg.reply(`Sorry, you can only send 5 messages every 30 seconds`);
+            }
         }
     }
-    
 });
 
 // Emitted whenever a member leaves a guild, or is kicked.
